@@ -35,6 +35,7 @@ def set_openai_api_key(API_KEY: Optional[str] = None):
     logging.info("API key set successfully.")
 
 
+<<<<<<< HEAD
 async def generate_summary(text: str, max_length: int = 100) -> str:
     """
     Generate a summary of the given text using the OpenAI GPT-3 model.
@@ -59,6 +60,24 @@ async def generate_summary(text: str, max_length: int = 100) -> str:
                     "content": prompt,
                 }
             ],
+=======
+def generate_summary(text: str, max_length: int = 100) -> str:
+    # The max_lenght parameter is now ignored.
+    prompt = f"Summarize this document :\n\n{text}\n"
+    print(prompt)
+
+    try:
+        print(">>>>generate_summary::openai.ChatCompletion.create")
+
+        completion = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
+>>>>>>> 9fc0273 (Handle request token limit error)
         )
 
         print(">>>>generate_summary::summary")
@@ -106,13 +125,31 @@ async def summarize_large_text(
 
     logging.info("Generating summaries...")
 
-    for idx, chunk in enumerate(wrapped_text):
-        my_bar.progress(idx, text=progress_text)
-        summary_chunk = await generate_summary(text=chunk, max_length=summary_length)
-        conversations.add_message(role="user", content=f"summarize: {chunk}")
-        conversations.add_message(role="assistant", content=summary_chunk)
-
-    return conversations
+    try:
+        for idx, chunk in enumerate(wrapped_text):
+            my_bar.progress(idx, text=progress_text)
+            summary_chunk = generate_summary(chunk, summary_chars_length)
+            conversations.add_message("user", f"summarize: {chunk}")
+            conversations.add_message("assistant", summary_chunk)
+        return conversations
+    except openai.InvalidRequestError as e:
+        print("An error has occurred: ", e)
+        # When a "request token exceeded limit" error occurs,
+        # the number of characters in the request is reduced
+        # by 20% and the request continues to be made.
+        # The lower limit on the number of characters in a request
+        # is set to 2000 to avoid multiple re-executions.
+        if max_chars_per_request < 2000:
+            raise e
+        elif e.code == 'context_length_exceeded':
+            conversations = summarize_large_text(
+                conversations,
+                text,
+                max_chars_per_request=int(max_chars_per_request * 0.8)
+            )
+            return conversations
+        else:
+            raise e
 
 
 async def continue_conversation(
