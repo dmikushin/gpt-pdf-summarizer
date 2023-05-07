@@ -35,7 +35,6 @@ def set_openai_api_key(API_KEY: Optional[str] = None):
     logging.info("API key set successfully.")
 
 
-<<<<<<< HEAD
 async def generate_summary(text: str, max_length: int = 100) -> str:
     """
     Generate a summary of the given text using the OpenAI GPT-3 model.
@@ -60,24 +59,6 @@ async def generate_summary(text: str, max_length: int = 100) -> str:
                     "content": prompt,
                 }
             ],
-=======
-def generate_summary(text: str, max_length: int = 100) -> str:
-    # The max_lenght parameter is now ignored.
-    prompt = f"Summarize this document :\n\n{text}\n"
-    print(prompt)
-
-    try:
-        print(">>>>generate_summary::openai.ChatCompletion.create")
-
-        completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
->>>>>>> 9fc0273 (Handle request token limit error)
         )
 
         print(">>>>generate_summary::summary")
