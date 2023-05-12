@@ -120,15 +120,14 @@ async def summarize_large_text(
         # by 20% and the request continues to be made.
         # The lower limit on the number of characters in a request
         # is set to 2000 to avoid multiple re-executions.
-        if max_chars_per_request < 2000:
+        if max_chars_per_request < 1000:
             raise e
         elif e.code == 'context_length_exceeded':
-            conversations = summarize_large_text(
+            return summarize_large_text(
                 conversations,
                 text,
                 max_chars_per_request=int(max_chars_per_request * 0.8)
             )
-            return conversations
         else:
             raise e
 
