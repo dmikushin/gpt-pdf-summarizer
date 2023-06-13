@@ -1,12 +1,19 @@
-"""This module contains functions for summarizing text using the OpenAI GPT models."""
+"""This module contains functions to generate summaries of text using the OpenAI GPT models."""
+
 import os
 import textwrap
+import logging
+import time
 from typing import Optional
 
 import openai
 import streamlit as st
+import asyncio
 
 from .conversations import Conversations
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
 
 
 @st.cache_resource
@@ -25,10 +32,10 @@ def set_openai_api_key(API_KEY: Optional[str] = None):
     if API_KEY is not None:
         openai.api_key = API_KEY
 
-    print("set API_KEY: ", openai.api_key)
+    logging.info("API key set successfully.")
 
 
-def generate_summary(text: str, max_length: int = 100) -> str:
+async def generate_summary(text: str, max_length: int = 100) -> str:
     """
     Generate a summary of the given text using the OpenAI GPT-3 model.
 
@@ -39,25 +46,29 @@ def generate_summary(text: str, max_length: int = 100) -> str:
     Returns:
         str: The generated summary.
     """
-    # The max_lenght parameter is now ignored.
     prompt = f"Summarize this document :\n\n{text}\n"
-    print(prompt)
+    logging.debug(f"Prompt: {prompt}")
 
-    completion = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-    )
+    try:
+        completion = await openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            temperature=0.2,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                }
+            ],
+        )
+    except Exception as e:
+        logging.error(f"Error generating summary: {e}")
+        return ""
 
     summary = completion.choices[0].message["content"]
     return summary
 
 
-def summarize_large_text(
+async def summarize_large_text(
     conversations: Conversations,
     text: str,
     max_summarize_chars: int = 9000,
@@ -78,23 +89,33 @@ def summarize_large_text(
     Returns:
         Conversations: The updated conversation object with the summaries added.
     """
-    wrapped_text = textwrap.wrap(text, max_chars_per_request)
+    wrapped_text: list = textwrap.wrap(text, max_chars_per_request)
     length = max_summarize_chars // max_chars_per_request
     wrapped_text = wrapped_text[:length]
 
     progress_text = "Operation in progress. Please wait."
     my_bar = st.progress(0, text=progress_text)
 
+    logging.debug(f"Wrapped text: {wrapped_text}")
+    logging.debug(f"Length of wrapped text: {len(wrapped_text)}")
+    logging.debug(f"Summary length: {summary_length}")
+    logging.debug(f"Max chars per request: {max_chars_per_request}")
+    logging.debug(f"Max summarize chars: {max_summarize_chars}")
+
+    logging.info("Generating summaries...")
+
     for idx, chunk in enumerate(wrapped_text):
         my_bar.progress(idx, text=progress_text)
-        summary_chunk = generate_summary(chunk, summary_length)
-        conversations.add_message("user", f"summarize: {chunk}")
-        conversations.add_message("assistant", summary_chunk)
+        summary_chunk = await generate_summary(text=chunk, max_length=summary_length)
+        conversations.add_message(role="user", content=f"summarize: {chunk}")
+        conversations.add_message(role="assistant", content=summary_chunk)
 
     return conversations
 
 
-def continue_conversation(conversations: Conversations, question: str) -> Conversations:
+async def continue_conversation(
+    conversations: Conversations, question: str
+) -> Conversations:
     """
     Continue the conversation by adding a user question and generating a response from the assistant.
 
@@ -105,13 +126,17 @@ def continue_conversation(conversations: Conversations, question: str) -> Conver
     Returns:
         Conversations: The updated conversation object with the question and response added.
     """
-    conversations.add_message("user", question)
+    conversations.add_message(role="user", content=question)
 
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo", messages=conversations.get_message_dict_list()
-    )
+    try:
+        response = await openai.ChatCompletion.create(
+            model="gpt-3.5-turbo", temperature=0.3, messages=conversations.get_message_dict_list()
+        )
+    except Exception as e:
+        logging.error(f"Error continuing conversation: {e}")
+        return conversations
 
     answer = response.choices[0].message["content"]
-    conversations.add_message("assistant", answer)
+    conversations.add_message(role="assistant", content=answer)
 
     return conversations
