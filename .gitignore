@@ -17,3 +17,5 @@ venv/
 env/
 
 .envrc
+.vscode/settings.json
+app/langchainme.py
