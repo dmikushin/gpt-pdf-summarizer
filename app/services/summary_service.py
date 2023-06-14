@@ -60,13 +60,15 @@ async def generate_summary(text: str, max_length: int = 100) -> str:
                 }
             ],
         )
+
+        print(">>>>generate_summary::summary")
+        summary = completion.choices[0].message["content"]
+        print(f">>>>generate_summary::{completion.choices[0].message['content']}")
+        return summary
+
     except Exception as e:
         logging.error(f"Error generating summary: {e}")
         return ""
-
-    summary = completion.choices[0].message["content"]
-    return summary
-
 
 async def summarize_large_text(
     conversations: Conversations,
