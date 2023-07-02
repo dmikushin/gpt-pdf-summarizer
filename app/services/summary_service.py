@@ -50,7 +50,7 @@ async def generate_summary(text: str, max_length: int = 100) -> str:
     logging.debug(f"Prompt: {prompt}")
 
     try:
-        completion = await openai.ChatCompletion.create(
+        completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             temperature=0.2,
             messages=[
@@ -75,7 +75,7 @@ async def summarize_large_text(
     text: str,
     max_summarize_chars: int = 9000,
     max_chars_per_request: int = 4000,
-    summary_length: int = 1000,
+    summary_chars_length: int = 1000,
 ) -> Conversations:
     """Summarize a large text by breaking it into chunks and summarizing each chunk separately.
 
@@ -86,7 +86,7 @@ async def summarize_large_text(
         text (str): The text to summarize.
         max_summarize_chars (int, optional): The maximum number of characters to summarize. Defaults to 9000.
         max_chars_per_request (int, optional): The maximum number of characters per request. Defaults to 4000.
-        summary_length (int, optional): The length of the summary. Defaults to 1000.
+        summary_chars_length (int, optional): The length of the summary. Defaults to 1000.
 
     Returns:
         Conversations: The updated conversation object with the summaries added.
@@ -100,7 +100,7 @@ async def summarize_large_text(
 
     logging.debug(f"Wrapped text: {wrapped_text}")
     logging.debug(f"Length of wrapped text: {len(wrapped_text)}")
-    logging.debug(f"Summary length: {summary_length}")
+    logging.debug(f"Summary length: {summary_chars_length}")
     logging.debug(f"Max chars per request: {max_chars_per_request}")
     logging.debug(f"Max summarize chars: {max_summarize_chars}")
 

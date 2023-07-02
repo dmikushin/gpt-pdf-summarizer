@@ -10,5 +10,5 @@ router = APIRouter()
 async def upload_pdf(pdf_file: UploadFile = File(...)):
     conversations = Conversations()
     raw_text = extract_text_from_pdf(await pdf_file.read())
-    conversations =  summarize_large_text(conversations, raw_text)
+    conversations = await summarize_large_text(conversations, raw_text)
     return {"conversations": conversations}
