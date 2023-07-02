@@ -39,11 +39,7 @@ Access FastAPI and Streamlit applications:
 
 3. The summarized text will be displayed on the Streamlit app. You can also interact with the GPT AI to ask questions about the summarized content.
 
-## Contributing
-
-Please read `CONTRIBUTING.md` for details on our code of conduct, and the process for submitting pull requests to the project.
-
 ## License
 
-This project is licensed under the MIT License - see the `LICENSE.md` file for details.
+This project is licensed under the MIT License - see the `LICENSE` file for details.
 
