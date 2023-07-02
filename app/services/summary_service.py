@@ -109,7 +109,7 @@ async def summarize_large_text(
     try:
         for idx, chunk in enumerate(wrapped_text):
             my_bar.progress(idx, text=progress_text)
-            summary_chunk = generate_summary(chunk, summary_chars_length)
+            summary_chunk = await generate_summary(chunk, summary_chars_length)
             conversations.add_message("user", f"summarize: {chunk}")
             conversations.add_message("assistant", summary_chunk)
         return conversations
